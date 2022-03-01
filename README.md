@@ -1,4 +1,5 @@
-Most Specific Period
+# Most Specific Period
+
 An MSP, or Most Specific Period is defined as follows: 
 - Given a period that hasn’t started or has already finished, an error is returned.
 - Given a period that is currently valid, the period which is valid is chosen.
