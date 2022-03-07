@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/taigrr/most-specific-period/msp"
@@ -43,6 +44,7 @@ func main() {
 
 	for s.Scan() {
 		input := s.Text()
+		input = strings.TrimSpace(input)
 		if input == "" {
 			continue
 		}
