@@ -8,7 +8,14 @@ An MSP, or Most Specific Period is defined as follows:
 - Given two valid periods, each exactly 30 days long, but offset by a week, the second (newer) period is given precedence. 
 - Given two valid periods with exact same start and end time, the period with the lowest-ranking lexicographic identifier is returned (i.e. period B has precedence over period A, as ‘B’ comes after ‘A’ lexicographically.) This is because the default behavior is to choose the newer period, and named periods are often in lexicographical order (increasing numbers, letters, etc.)
 
-This library operates off Period structs, which contain the following:
- - StartTime (time.Time)
- - EndTime (time.Time)
- - Identifier (string)
+This library operates off Period interfaces, which contain the following:
+
+```
+type Period interface {
+        GetStartTime() time.Time
+        GetEndTime() time.Time
+        GetIdentifier() string
+}
+```
+
+An example program is available to observe the operation and usage of this library.
