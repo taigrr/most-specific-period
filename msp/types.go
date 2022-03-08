@@ -2,8 +2,8 @@ package msp
 
 import "time"
 
-type Period struct {
-	StartTime  time.Time `json:"startTime"`
-	EndTime    time.Time `json:"endTime"`
-	Identifier string    `json:"identifier"`
+type Period interface {
+	GetStartTime() time.Time
+	GetEndTime() time.Time
+	GetIdentifier() string
 }

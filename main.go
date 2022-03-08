@@ -11,6 +11,22 @@ import (
 	"github.com/taigrr/most-specific-period/msp"
 )
 
+type Period struct {
+	EndTime    time.Time
+	StartTime  time.Time
+	Identifier string
+}
+
+func (p Period) GetEndTime() time.Time {
+	return p.EndTime
+}
+func (p Period) GetStartTime() time.Time {
+	return p.StartTime
+}
+func (p Period) GetIdentifier() string {
+	return p.Identifier
+}
+
 func init() {
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
@@ -41,7 +57,7 @@ func main() {
 	}
 
 	periods := []msp.Period{}
-
+	currentPeriod := Period{}
 	for s.Scan() {
 		input := s.Text()
 		input = strings.TrimSpace(input)
@@ -54,14 +70,15 @@ func main() {
 				fmt.Printf("ERROR: Invalid timestamp: %v", t)
 				os.Exit(1)
 			}
-			periods[(count-1)/3].EndTime = t
+			currentPeriod.EndTime = t
 
+			periods = append(periods, currentPeriod)
 			if terminal {
 				fmt.Print("Identifier: ")
 			}
 		}
 		if count%3 == 1 {
-			periods = append(periods, msp.Period{Identifier: s.Text()})
+			currentPeriod = Period{Identifier: s.Text()}
 			if terminal {
 				fmt.Print("StartTime: ")
 			}
@@ -72,7 +89,7 @@ func main() {
 				fmt.Printf("ERROR: Invalid timestamp: %v", t)
 				os.Exit(1)
 			}
-			periods[(count-1)/3].StartTime = t
+			currentPeriod.StartTime = t
 
 			if terminal {
 				fmt.Print("EndTime: ")
@@ -87,7 +104,7 @@ func main() {
 		os.Exit(1)
 	}
 	if terminal {
-		fmt.Printf("The MSP from the list was: ")
+		fmt.Printf("\nThe MSP from the list was: ")
 	}
 	fmt.Printf("%s\n", m)
 }
