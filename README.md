@@ -12,9 +12,9 @@ This library operates off Period interfaces, which contain the following:
 
 ```
 type Period interface {
-        GetStartTime() time.Time
-        GetEndTime() time.Time
-        GetIdentifier() string
+        GetStartTime()  time.Time   // Inclusive start time
+        GetEndTime()    time.Time   // Exclusive end time ("expiration time")
+        GetIdentifier() string 
 }
 ```
 

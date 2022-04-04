@@ -44,7 +44,7 @@ func GetNextChangeOver(t time.Time, periods ...Period) (ts time.Time, err error)
 			return ts, nil
 		}
 	}
-	return time.Unix(0, 0), ErrNoNextChangeover
+	return time.Time{}, ErrNoNextChangeover
 }
 
 func FlattenPeriods(periods ...Period) (ids []string) {

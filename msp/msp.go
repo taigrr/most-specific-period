@@ -61,7 +61,9 @@ func GetDuration(start time.Time, end time.Time) (dur time.Duration, err error) 
 func ValidTimePeriods(ts time.Time, periods ...Period) []Period {
 	var valid []Period
 	for _, p := range periods {
-		if p.GetStartTime().Before(ts) && p.GetEndTime().After(ts) {
+		start := p.GetStartTime()
+		end := p.GetEndTime()
+		if (start.Before(ts) || start.Equal(ts)) && (end.After(ts)) {
 			valid = append(valid, p)
 		}
 	}
