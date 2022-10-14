@@ -40,12 +40,29 @@ func warnMessage() {
 	fmt.Print("Please type your date formats as follows, hit return between each field (RFC 3339), and hit Control+D to signal you are complete: \nIdentifier: id\nStartTime: 2019-10-12T07:20:50.52Z\nEndTime: 2019-10-12T07:20:50.52Z\n")
 }
 
+func helpMessage() {
+	fmt.Print("\nmost-significant-period [-h][-d]\n\nGenerates a timeline of periods and will provide a most significant period if available.\n\n-h\tShows this help menut\n-d\tProvide a RFC 3339 time to provide an alternate point for calculating MSP.")
+}
+
 func main() {
+	var start time.Time
 	help := flag.Bool("h", false, "displays help command")
+	userDate := flag.String("d", "", "use a custom date to calculate MSP")
 	flag.Parse()
 	if *help {
-		fmt.Println("Help goes here")
+		helpMessage()
 		os.Exit(0)
+	}
+
+	if userDate != nil && *userDate != "" {
+		t, err := time.Parse(time.RFC3339, *userDate)
+		if err != nil {
+			fmt.Println("Please enter the date using the YYYY-MM-DDT00:00:00.00Z")
+			os.Exit(1)
+		}
+		start = t
+	} else {
+		start = time.Now()
 	}
 	terminal := false
 	fi, _ := os.Stdin.Stat()
@@ -105,17 +122,18 @@ func main() {
 		count++
 	}
 
-	m, err := msp.MostSpecificPeriod(time.Now(), periods...)
+	vals := msp.GenerateTimeline(periods...)
+	fmt.Print("\n")
+	for _, val := range vals {
+		fmt.Print(val)
+	}
+	m, err := msp.MostSpecificPeriod(start, periods...)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
+		fmt.Printf("No significant period found")
 		os.Exit(1)
 	}
 	if terminal {
 		fmt.Printf("\nThe MSP from the list was: ")
 	}
 	fmt.Printf("%s\n", m)
-	vals := msp.GenerateTimeline(periods...)
-	for _, val := range vals {
-		fmt.Println(val)
-	}
 }
