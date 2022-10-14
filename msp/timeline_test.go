@@ -151,6 +151,95 @@ func TestGenerateTime(t *testing.T) {
 				Identifier: "A",
 			}},
 		},
+		{
+			testID: "not in current point in time",
+			ts:     now,
+			result: []string{
+				fmt.Sprintf("A\t%s\t%s\n", now.Add(-time.Hour*24*30), now.Add(-time.Hour*24*29)),
+				fmt.Sprintf("B\t%s\t%s\n", now.Add(time.Hour*24*90), now.Add(time.Hour*24*120)),
+			},
+			periods: []Period{
+				TimeWindow{
+					StartTime:  now.Add(-time.Hour * 24 * 30),
+					EndTime:    now.Add(-time.Hour * 24 * 29),
+					Identifier: "A",
+				},
+				TimeWindow{
+					StartTime:  now.Add(time.Hour * 24 * 90),
+					EndTime:    now.Add(time.Hour * 24 * 120),
+					Identifier: "B",
+				},
+			},
+		},
+		{
+			testID: "three overlapping periods",
+			ts:     now,
+			result: []string{
+				fmt.Sprintf("C\t%s\t%s\n", now.Add(-time.Hour*24*31), now.Add(-time.Hour*24*30)),
+				fmt.Sprintf("A\t%s\t%s\n", now.Add(-time.Hour*24*30), now.Add(-time.Hour*24*29)),
+				fmt.Sprintf("C\t%s\t%s\n", now.Add(-time.Hour*24*29), now.Add(time.Hour*24*90)),
+				fmt.Sprintf("B\t%s\t%s\n", now.Add(time.Hour*24*90), now.Add(time.Hour*24*120)),
+				fmt.Sprintf("C\t%s\t%s\n", now.Add(time.Hour*24*120), now.Add(time.Hour*24*140)),
+			},
+			periods: []Period{
+				TimeWindow{
+					StartTime:  now.Add(-time.Hour * 24 * 30),
+					EndTime:    now.Add(-time.Hour * 24 * 29),
+					Identifier: "A",
+				},
+				TimeWindow{
+					StartTime:  now.Add(time.Hour * 24 * 90),
+					EndTime:    now.Add(time.Hour * 24 * 120),
+					Identifier: "B",
+				},
+				TimeWindow{
+					StartTime:  now.Add(-time.Hour * 24 * 31),
+					EndTime:    now.Add(time.Hour * 24 * 140),
+					Identifier: "C",
+				},
+			},
+		},
+		{
+			testID: "multiple overlapping periods",
+			ts:     now,
+			result: []string{
+				fmt.Sprintf("D\t%s\t%s\n", now.Add(-time.Hour*24*150), now.Add(-time.Hour*24*65)),
+				fmt.Sprintf("E\t%s\t%s\n", now.Add(-time.Hour*24*65), now.Add(-time.Hour*24*31)),
+				fmt.Sprintf("C\t%s\t%s\n", now.Add(-time.Hour*24*31), now.Add(-time.Hour*24*30)),
+				fmt.Sprintf("A\t%s\t%s\n", now.Add(-time.Hour*24*30), now.Add(-time.Hour*24*29)),
+				fmt.Sprintf("C\t%s\t%s\n", now.Add(-time.Hour*24*29), now.Add(time.Hour*24*90)),
+				fmt.Sprintf("B\t%s\t%s\n", now.Add(time.Hour*24*90), now.Add(time.Hour*24*120)),
+				fmt.Sprintf("C\t%s\t%s\n", now.Add(time.Hour*24*120), now.Add(time.Hour*24*140)),
+				fmt.Sprintf("E\t%s\t%s\n", now.Add(time.Hour*24*140), now.Add(time.Hour*24*175)),
+			},
+			periods: []Period{
+				TimeWindow{
+					StartTime:  now.Add(-time.Hour * 24 * 30),
+					EndTime:    now.Add(-time.Hour * 24 * 29),
+					Identifier: "A",
+				},
+				TimeWindow{
+					StartTime:  now.Add(time.Hour * 24 * 90),
+					EndTime:    now.Add(time.Hour * 24 * 120),
+					Identifier: "B",
+				},
+				TimeWindow{
+					StartTime:  now.Add(-time.Hour * 24 * 31),
+					EndTime:    now.Add(time.Hour * 24 * 140),
+					Identifier: "C",
+				},
+				TimeWindow{
+					StartTime:  now.Add(-time.Hour * 24 * 150),
+					EndTime:    now.Add(time.Hour * 24 * 175),
+					Identifier: "D",
+				},
+				TimeWindow{
+					StartTime:  now.Add(-time.Hour * 24 * 65),
+					EndTime:    now.Add(time.Hour * 24 * 175),
+					Identifier: "E",
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -161,7 +250,7 @@ func TestGenerateTime(t *testing.T) {
 			}
 			for idx, period := range timeline {
 				if period != tc.result[idx] {
-					t.Errorf("Expected:\t%s\t\tHad:\t%s", period, tc.result[idx])
+					t.Errorf("Expected:\t%s\nHad:\t%s", period, tc.result[idx])
 				}
 			}
 		})
