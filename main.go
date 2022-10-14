@@ -20,9 +20,11 @@ type Period struct {
 func (p Period) GetEndTime() time.Time {
 	return p.EndTime
 }
+
 func (p Period) GetStartTime() time.Time {
 	return p.StartTime
 }
+
 func (p Period) GetIdentifier() string {
 	return p.Identifier
 }
@@ -33,13 +35,18 @@ func init() {
 		flag.PrintDefaults()
 	}
 }
+
 func warnMessage() {
 	fmt.Print("Please type your date formats as follows, hit return between each field (RFC 3339), and hit Control+D to signal you are complete: \nIdentifier: id\nStartTime: 2019-10-12T07:20:50.52Z\nEndTime: 2019-10-12T07:20:50.52Z\n")
-
 }
 
 func main() {
+	help := flag.Bool("h", false, "displays help command")
 	flag.Parse()
+	if *help {
+		fmt.Println("Help goes here")
+		os.Exit(0)
+	}
 	terminal := false
 	fi, _ := os.Stdin.Stat()
 	if (fi.Mode() & os.ModeCharDevice) == 0 {
@@ -107,4 +114,8 @@ func main() {
 		fmt.Printf("\nThe MSP from the list was: ")
 	}
 	fmt.Printf("%s\n", m)
+	vals := msp.GenerateTimeline(periods...)
+	for _, val := range vals {
+		fmt.Println(val)
+	}
 }
