@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"time"
@@ -117,6 +116,6 @@ func main() {
 	fmt.Printf("%s\n", m)
 	vals := msp.GenerateTimeline(periods...)
 	for _, val := range vals {
-		log.Print(val)
+		fmt.Println(val)
 	}
 }
