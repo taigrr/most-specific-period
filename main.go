@@ -123,13 +123,13 @@ func main() {
 	}
 
 	vals := msp.GenerateTimeline(periods...)
-	fmt.Print("\n")
+	fmt.Print("\nTimeline of changeovers:\n")
 	for _, val := range vals {
-		fmt.Print(val)
+		fmt.Println(val)
 	}
 	m, err := msp.MostSpecificPeriod(start, periods...)
 	if err != nil {
-		fmt.Printf("No significant period found")
+		fmt.Printf("No significant period found\n")
 		os.Exit(1)
 	}
 	if terminal {

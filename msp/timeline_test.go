@@ -269,7 +269,7 @@ func TestGenerateTime(t *testing.T) {
 				t.Fatalf("Time line had %d results, expected %d", len(timeline), len(tc.result))
 			}
 			for idx, period := range timeline {
-				if period != tc.result[idx] {
+				if period.(TimeWindow).String()+"\n" != tc.result[idx] {
 					t.Errorf("Expected:\t%s\nHad:\t%s", period, tc.result[idx])
 				}
 			}

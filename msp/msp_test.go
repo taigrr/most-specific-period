@@ -6,23 +6,7 @@ import (
 	"time"
 )
 
-type TimeWindow struct {
-	StartTime  time.Time
-	EndTime    time.Time
-	Identifier string
-}
-
-func (p TimeWindow) GetIdentifier() string {
-	return p.Identifier
-}
-func (p TimeWindow) GetEndTime() time.Time {
-	return p.EndTime
-}
-func (p TimeWindow) GetStartTime() time.Time {
-	return p.StartTime
-}
-
-//(periods ...Period) (id string, err error) {
+// (periods ...Period) (id string, err error) {
 func TestMostSpecificPeriod(t *testing.T) {
 	// use a static timestamp to make sure tests don't fail on slower systems or during a process pause
 	now := time.Now()
@@ -32,79 +16,135 @@ func TestMostSpecificPeriod(t *testing.T) {
 		result  string
 		err     error
 		periods []Period
-	}{{testID: "No choices",
-		ts:      now,
-		result:  "",
-		err:     ErrNoValidPeriods,
-		periods: []Period{}},
-		{testID: "Two Choices, shorter is second",
+	}{
+		{
+			testID:  "No choices",
+			ts:      now,
+			result:  "",
+			err:     ErrNoValidPeriods,
+			periods: []Period{},
+		},
+		{
+			testID: "Two Choices, shorter is second",
 			ts:     now,
 			result: "B",
 			err:    nil,
-			periods: []Period{TimeWindow{StartTime: now.Add(-5 * time.Minute),
-				EndTime:    now.Add(time.Minute),
-				Identifier: "A"},
-				TimeWindow{StartTime: now.Add(-2 * time.Minute),
+			periods: []Period{
+				TimeWindow{
+					StartTime:  now.Add(-5 * time.Minute),
 					EndTime:    now.Add(time.Minute),
-					Identifier: "B"}}},
-		{testID: "Two Choices, one is a year, other a minute",
+					Identifier: "A",
+				},
+				TimeWindow{
+					StartTime:  now.Add(-2 * time.Minute),
+					EndTime:    now.Add(time.Minute),
+					Identifier: "B",
+				},
+			},
+		},
+		{
+			testID: "Two Choices, one is a year, other a minute",
 			ts:     now,
 			result: "B",
 			err:    nil,
-			periods: []Period{TimeWindow{StartTime: now.Add(-1 * time.Hour * 24 * 365),
-				EndTime:    now.Add(time.Minute),
-				Identifier: "A"},
-				TimeWindow{StartTime: now.Add(-5 * time.Minute),
+			periods: []Period{
+				TimeWindow{
+					StartTime:  now.Add(-1 * time.Hour * 24 * 365),
 					EndTime:    now.Add(time.Minute),
-					Identifier: "B"}}},
+					Identifier: "A",
+				},
+				TimeWindow{
+					StartTime:  now.Add(-5 * time.Minute),
+					EndTime:    now.Add(time.Minute),
+					Identifier: "B",
+				},
+			},
+		},
 
-		{testID: "Two Choices, shorter is first",
+		{
+			testID: "Two Choices, shorter is first",
 			ts:     now,
 			result: "A",
 			err:    nil,
-			periods: []Period{TimeWindow{StartTime: now.Add(-2 * time.Minute),
-				EndTime:    now.Add(time.Minute),
-				Identifier: "A"},
-				TimeWindow{StartTime: now.Add(-5 * time.Minute),
+			periods: []Period{
+				TimeWindow{
+					StartTime:  now.Add(-2 * time.Minute),
 					EndTime:    now.Add(time.Minute),
-					Identifier: "B"}}},
-		{testID: "Two Choices, one in the past",
+					Identifier: "A",
+				},
+				TimeWindow{
+					StartTime:  now.Add(-5 * time.Minute),
+					EndTime:    now.Add(time.Minute),
+					Identifier: "B",
+				},
+			},
+		},
+		{
+			testID: "Two Choices, one in the past",
 			ts:     now,
 			result: "A",
 			err:    nil,
-			periods: []Period{TimeWindow{StartTime: now.Add(-time.Minute),
-				EndTime:    now.Add(time.Minute),
-				Identifier: "A"},
-				TimeWindow{StartTime: now.Add(-2 * time.Minute),
+			periods: []Period{
+				TimeWindow{
+					StartTime:  now.Add(-time.Minute),
+					EndTime:    now.Add(time.Minute),
+					Identifier: "A",
+				},
+				TimeWindow{
+					StartTime:  now.Add(-2 * time.Minute),
 					EndTime:    now.Add(-time.Minute),
-					Identifier: "B"}}},
-		{testID: "Two Choices, one invalid",
+					Identifier: "B",
+				},
+			},
+		},
+		{
+			testID: "Two Choices, one invalid",
 			ts:     now,
 			result: "B",
 			err:    nil,
-			periods: []Period{TimeWindow{StartTime: now.Add(time.Minute),
-				EndTime:    now.Add(-time.Minute),
-				Identifier: "A"},
-				TimeWindow{StartTime: now.Add(-2 * time.Minute),
+			periods: []Period{
+				TimeWindow{
+					StartTime:  now.Add(time.Minute),
+					EndTime:    now.Add(-time.Minute),
+					Identifier: "A",
+				},
+				TimeWindow{
+					StartTime:  now.Add(-2 * time.Minute),
 					EndTime:    now.Add(time.Minute),
-					Identifier: "B"}}},
-		{testID: "Two Choices, Identical periods",
+					Identifier: "B",
+				},
+			},
+		},
+		{
+			testID: "Two Choices, Identical periods",
 			ts:     now,
 			result: "B",
 			err:    nil,
-			periods: []Period{TimeWindow{StartTime: now.Add(-time.Minute),
-				EndTime:    now.Add(time.Minute),
-				Identifier: "A"},
-				TimeWindow{StartTime: now.Add(-time.Minute),
+			periods: []Period{
+				TimeWindow{
+					StartTime:  now.Add(-time.Minute),
 					EndTime:    now.Add(time.Minute),
-					Identifier: "B"}}},
-		{testID: "One choice",
+					Identifier: "A",
+				},
+				TimeWindow{
+					StartTime:  now.Add(-time.Minute),
+					EndTime:    now.Add(time.Minute),
+					Identifier: "B",
+				},
+			},
+		},
+		{
+			testID: "One choice",
 			ts:     now,
 			result: "A",
 			err:    nil,
-			periods: []Period{TimeWindow{StartTime: now.Add(-time.Minute),
+			periods: []Period{TimeWindow{
+				StartTime:  now.Add(-time.Minute),
 				EndTime:    now.Add(time.Minute),
-				Identifier: "A"}}}}
+				Identifier: "A",
+			}},
+		},
+	}
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s", tc.testID), func(t *testing.T) {
 			id, err := MostSpecificPeriod(tc.ts, tc.periods...)
@@ -114,7 +154,6 @@ func TestMostSpecificPeriod(t *testing.T) {
 			if err != tc.err {
 				t.Errorf("Error '%v' does not match expected '%v'", err, tc.err)
 			}
-
 		})
 	}
 }

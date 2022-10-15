@@ -1,11 +1,38 @@
 package msp
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
+
+type TimeWindow struct {
+	StartTime  time.Time
+	EndTime    time.Time
+	Identifier string
+}
+
+func (p TimeWindow) GetIdentifier() string {
+	return p.Identifier
+}
+
+func (p TimeWindow) GetEndTime() time.Time {
+	return p.EndTime
+}
+
+func (p TimeWindow) GetStartTime() time.Time {
+	return p.StartTime
+}
+
+func (t TimeWindow) String() string {
+	return fmt.Sprintf("%s\t%s\t%s",
+		t.GetIdentifier(),
+		t.GetStartTime(),
+		t.GetEndTime())
+}
 
 // Outputs a formatted timeline of periods
-func GenerateTimeline(periods ...Period) (out []string) {
+func GenerateTimeline(periods ...Period) (out []Period) {
 	if len(periods) == 0 {
-		out = []string{}
 		return out
 	}
 	periodsByID := make(map[string]Period)
@@ -22,8 +49,7 @@ func GenerateTimeline(periods ...Period) (out []string) {
 				start = periodsByID[val].GetStartTime()
 				next = periodsByID[val].GetEndTime()
 			}
-			frame := fmt.Sprintf("%s\t%s\t%s\n", val, start, next)
-			out = append(out, frame)
+			out = append(out, TimeWindow{StartTime: start, EndTime: next, Identifier: val})
 			start = next
 		}
 	}
