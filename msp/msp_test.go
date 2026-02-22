@@ -1,7 +1,6 @@
 package msp
 
 import (
-	"fmt"
 	"testing"
 	"time"
 )
@@ -146,7 +145,7 @@ func TestMostSpecificPeriod(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
-		t.Run(fmt.Sprintf("%s", tc.testID), func(t *testing.T) {
+		t.Run(tc.testID, func(t *testing.T) {
 			id, err := MostSpecificPeriod(tc.ts, tc.periods...)
 			if id != tc.result {
 				t.Errorf("ID '%s' does not match expected '%s'", id, tc.result)

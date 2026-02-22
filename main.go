@@ -41,7 +41,7 @@ func warnMessage() {
 }
 
 func helpMessage() {
-	fmt.Print("\nmost-significant-period [-h][-d]\n\nGenerates a timeline of periods and will provide a most significant period if available.\n\n-h\tShows this help menut\n-d\tProvide a RFC 3339 time to provide an alternate point for calculating MSP.")
+	fmt.Print("\nmost-specific-period [-h][-d]\n\nGenerates a timeline of periods and will provide a most specific period if available.\n\n-h\tShows this help menu\n-d\tProvide an RFC 3339 time to provide an alternate point for calculating MSP.")
 }
 
 func main() {

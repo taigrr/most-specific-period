@@ -1,3 +1,3 @@
 module github.com/taigrr/most-specific-period
 
-go 1.18
+go 1.26

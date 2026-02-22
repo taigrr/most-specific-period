@@ -263,7 +263,7 @@ func TestGenerateTime(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(fmt.Sprintf("%s", tc.testID), func(t *testing.T) {
+		t.Run(tc.testID, func(t *testing.T) {
 			timeline := GenerateTimeline(tc.periods...)
 			if len(timeline) != len(tc.result) {
 				t.Fatalf("Time line had %d results, expected %d", len(timeline), len(tc.result))
