@@ -1,7 +1,6 @@
 package msp
 
 import (
-	"fmt"
 	"testing"
 	"time"
 )
@@ -148,7 +147,7 @@ func TestGetChangeOvers(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
-		t.Run(fmt.Sprintf("%s", tc.testID), func(t *testing.T) {
+		t.Run(tc.testID, func(t *testing.T) {
 			changeovers := GetChangeOvers(tc.periods...)
 			if !slicesEqual(changeovers, tc.result) {
 				t.Errorf("Expected %v but got %v", tc.result, changeovers)
@@ -320,7 +319,7 @@ func TestFlattenPeriods(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(fmt.Sprintf("%s", tc.testID), func(t *testing.T) {
+		t.Run(tc.testID, func(t *testing.T) {
 			changeovers := FlattenPeriods(tc.periods...)
 			if !slicesEqual(changeovers, tc.result) {
 				t.Errorf("Expected %v but got %v", tc.result, changeovers)
@@ -468,7 +467,7 @@ func TestGetNextChangeOver(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
-		t.Run(fmt.Sprintf("%s", tc.testID), func(t *testing.T) {
+		t.Run(tc.testID, func(t *testing.T) {
 			ts, err := GetNextChangeOver(now, tc.periods...)
 			if tc.err != err {
 				t.Errorf("Error %v does not match expected %v", tc.err, err)
