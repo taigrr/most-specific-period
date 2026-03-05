@@ -12,7 +12,7 @@ func MostSpecificPeriod(ts time.Time, periods ...Period) (id string, err error) 
 		return "", ErrNoValidPeriods
 	}
 	// find the shortest duration
-	d, err := GetDuration(periods[0].GetStartTime(), periods[0].GetEndTime())
+	d, _ := GetDuration(periods[0].GetStartTime(), periods[0].GetEndTime())
 	for _, x := range periods {
 		p, err := GetDuration(x.GetStartTime(), x.GetEndTime())
 		if err == nil && p < d {
@@ -34,7 +34,7 @@ func MostSpecificPeriod(ts time.Time, periods ...Period) (id string, err error) 
 			newest = x.GetStartTime()
 		}
 	}
-	// Determine whichever of these periods have the same start time in addtion to duration
+	// Determine whichever of these periods have the same start time in addition to duration
 	var matchingDurationsAndStartTimes []Period
 	for _, x := range matchingDurations {
 		if x.GetStartTime() == newest {
