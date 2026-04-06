@@ -5,24 +5,29 @@ import (
 	"time"
 )
 
+// TimeWindow is a concrete implementation of the Period interface.
 type TimeWindow struct {
 	StartTime  time.Time
 	EndTime    time.Time
 	Identifier string
 }
 
+// GetIdentifier returns the period's identifier string.
 func (p TimeWindow) GetIdentifier() string {
 	return p.Identifier
 }
 
+// GetEndTime returns the period's exclusive end time.
 func (p TimeWindow) GetEndTime() time.Time {
 	return p.EndTime
 }
 
+// GetStartTime returns the period's inclusive start time.
 func (p TimeWindow) GetStartTime() time.Time {
 	return p.StartTime
 }
 
+// String returns a tab-separated representation of the time window.
 func (t TimeWindow) String() string {
 	return fmt.Sprintf("%s\t%s\t%s",
 		t.GetIdentifier(),
@@ -30,7 +35,8 @@ func (t TimeWindow) String() string {
 		t.GetEndTime())
 }
 
-// Outputs a formatted timeline of periods
+// GenerateTimeline produces a flattened timeline of non-overlapping periods
+// by splitting overlapping input periods at changeover points.
 func GenerateTimeline(periods ...Period) (out []Period) {
 	if len(periods) == 0 {
 		return out

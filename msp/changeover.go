@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+// GetChangeOvers returns the sorted list of timestamps where the most
+// specific period changes from one identifier to another.
 func GetChangeOvers(periods ...Period) (changeovers []time.Time) {
 	timeStamps := []time.Time{}
 	for _, x := range periods {
@@ -37,6 +39,8 @@ func GetChangeOvers(periods ...Period) (changeovers []time.Time) {
 	return
 }
 
+// GetNextChangeOver returns the first changeover timestamp strictly after t.
+// If no such changeover exists, ErrNoNextChangeover is returned.
 func GetNextChangeOver(t time.Time, periods ...Period) (ts time.Time, err error) {
 	changeOvers := GetChangeOvers(periods...)
 	for _, ts := range changeOvers {
@@ -47,6 +51,8 @@ func GetNextChangeOver(t time.Time, periods ...Period) (ts time.Time, err error)
 	return time.Time{}, ErrNoNextChangeover
 }
 
+// FlattenPeriods returns an ordered list of period identifiers representing
+// the most specific period at each changeover point.
 func FlattenPeriods(periods ...Period) (ids []string) {
 	changeovers := GetChangeOvers(periods...)
 	for _, c := range changeovers {
