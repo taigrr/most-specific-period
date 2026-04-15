@@ -5,7 +5,157 @@ import (
 	"time"
 )
 
-// (periods ...Period) (id string, err error) {
+func TestGetDuration(t *testing.T) {
+	now := time.Now()
+	testCases := []struct {
+		testID string
+		start  time.Time
+		end    time.Time
+		dur    time.Duration
+		err    error
+	}{
+		{
+			testID: "Normal duration",
+			start:  now,
+			end:    now.Add(5 * time.Minute),
+			dur:    5 * time.Minute,
+			err:    nil,
+		},
+		{
+			testID: "Zero duration",
+			start:  now,
+			end:    now,
+			dur:    0,
+			err:    nil,
+		},
+		{
+			testID: "Start after end",
+			start:  now.Add(5 * time.Minute),
+			end:    now,
+			dur:    -5 * time.Minute,
+			err:    ErrEndAfterStart,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.testID, func(t *testing.T) {
+			dur, err := GetDuration(tc.start, tc.end)
+			if dur != tc.dur {
+				t.Errorf("Duration %v does not match expected %v", dur, tc.dur)
+			}
+			if err != tc.err {
+				t.Errorf("Error %v does not match expected %v", err, tc.err)
+			}
+		})
+	}
+}
+
+func TestValidTimePeriods(t *testing.T) {
+	now := time.Now()
+	testCases := []struct {
+		testID  string
+		ts      time.Time
+		periods []Period
+		count   int
+	}{
+		{
+			testID:  "No periods",
+			ts:      now,
+			periods: []Period{},
+			count:   0,
+		},
+		{
+			testID: "One valid period",
+			ts:     now,
+			periods: []Period{
+				TimeWindow{
+					StartTime:  now.Add(-time.Minute),
+					EndTime:    now.Add(time.Minute),
+					Identifier: "A",
+				},
+			},
+			count: 1,
+		},
+		{
+			testID: "Period in the past",
+			ts:     now,
+			periods: []Period{
+				TimeWindow{
+					StartTime:  now.Add(-2 * time.Minute),
+					EndTime:    now.Add(-time.Minute),
+					Identifier: "A",
+				},
+			},
+			count: 0,
+		},
+		{
+			testID: "Period in the future",
+			ts:     now,
+			periods: []Period{
+				TimeWindow{
+					StartTime:  now.Add(time.Minute),
+					EndTime:    now.Add(2 * time.Minute),
+					Identifier: "A",
+				},
+			},
+			count: 0,
+		},
+		{
+			testID: "Timestamp equals start time (inclusive)",
+			ts:     now,
+			periods: []Period{
+				TimeWindow{
+					StartTime:  now,
+					EndTime:    now.Add(time.Minute),
+					Identifier: "A",
+				},
+			},
+			count: 1,
+		},
+		{
+			testID: "Timestamp equals end time (exclusive)",
+			ts:     now,
+			periods: []Period{
+				TimeWindow{
+					StartTime:  now.Add(-time.Minute),
+					EndTime:    now,
+					Identifier: "A",
+				},
+			},
+			count: 0,
+		},
+		{
+			testID: "Mixed valid and invalid",
+			ts:     now,
+			periods: []Period{
+				TimeWindow{
+					StartTime:  now.Add(-time.Minute),
+					EndTime:    now.Add(time.Minute),
+					Identifier: "A",
+				},
+				TimeWindow{
+					StartTime:  now.Add(-3 * time.Minute),
+					EndTime:    now.Add(-2 * time.Minute),
+					Identifier: "B",
+				},
+				TimeWindow{
+					StartTime:  now.Add(-5 * time.Minute),
+					EndTime:    now.Add(5 * time.Minute),
+					Identifier: "C",
+				},
+			},
+			count: 2,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.testID, func(t *testing.T) {
+			valid := ValidTimePeriods(tc.ts, tc.periods...)
+			if len(valid) != tc.count {
+				t.Errorf("Got %d valid periods, expected %d", len(valid), tc.count)
+			}
+		})
+	}
+}
+
 func TestMostSpecificPeriod(t *testing.T) {
 	// use a static timestamp to make sure tests don't fail on slower systems or during a process pause
 	now := time.Now()

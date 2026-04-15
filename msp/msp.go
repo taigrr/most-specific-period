@@ -5,6 +5,10 @@ import (
 	"time"
 )
 
+// MostSpecificPeriod returns the identifier of the shortest-duration period
+// that contains timestamp ts. When multiple periods share the shortest
+// duration, the one with the latest start time wins; if start times also
+// match, the lexicographically last identifier is returned.
 func MostSpecificPeriod(ts time.Time, periods ...Period) (id string, err error) {
 	// Filter to get only valid periods here
 	periods = ValidTimePeriods(ts, periods...)
@@ -50,6 +54,8 @@ func MostSpecificPeriod(ts time.Time, periods ...Period) (id string, err error) 
 	return identifiers[len(identifiers)-1], nil
 }
 
+// GetDuration returns the duration between start and end. If start is after
+// end, ErrEndAfterStart is returned alongside the (negative) duration.
 func GetDuration(start time.Time, end time.Time) (dur time.Duration, err error) {
 	if start.After(end) {
 		err = ErrEndAfterStart
@@ -58,6 +64,8 @@ func GetDuration(start time.Time, end time.Time) (dur time.Duration, err error) 
 	return dur, err
 }
 
+// ValidTimePeriods filters periods to those whose start time is at or before
+// ts and whose end time is strictly after ts.
 func ValidTimePeriods(ts time.Time, periods ...Period) []Period {
 	var valid []Period
 	for _, p := range periods {
