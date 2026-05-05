@@ -2,14 +2,18 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/taigrr/most-specific-period/msp"
 )
+
+var errIncompletePeriod = errors.New("incomplete period input")
 
 type Period struct {
 	EndTime    time.Time
@@ -44,6 +48,63 @@ func helpMessage() {
 	fmt.Print("\nmost-specific-period [-h][-d]\n\nGenerates a timeline of periods and will provide a most specific period if available.\n\n-h\tShows this help menu\n-d\tProvide an RFC 3339 time to provide an alternate point for calculating MSP.")
 }
 
+func promptForField(field int) {
+	switch field {
+	case 0:
+		fmt.Print("Identifier: ")
+	case 1:
+		fmt.Print("StartTime: ")
+	case 2:
+		fmt.Print("EndTime: ")
+	}
+}
+
+func parsePeriods(r io.Reader, prompt func(int)) ([]msp.Period, error) {
+	scanner := bufio.NewScanner(r)
+	periods := []msp.Period{}
+	currentPeriod := Period{}
+	field := 0
+
+	for scanner.Scan() {
+		input := strings.TrimSpace(scanner.Text())
+		if input == "" {
+			continue
+		}
+
+		switch field {
+		case 0:
+			currentPeriod = Period{Identifier: input}
+		case 1:
+			start, err := time.Parse(time.RFC3339, input)
+			if err != nil {
+				return nil, fmt.Errorf("invalid start timestamp %q: %w", input, err)
+			}
+			currentPeriod.StartTime = start
+		case 2:
+			end, err := time.Parse(time.RFC3339, input)
+			if err != nil {
+				return nil, fmt.Errorf("invalid end timestamp %q: %w", input, err)
+			}
+			currentPeriod.EndTime = end
+			periods = append(periods, currentPeriod)
+		}
+
+		field = (field + 1) % 3
+		if prompt != nil {
+			prompt(field)
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+	if field != 0 {
+		return nil, errIncompletePeriod
+	}
+
+	return periods, nil
+}
+
 func main() {
 	var start time.Time
 	help := flag.Bool("h", false, "displays help command")
@@ -72,54 +133,22 @@ func main() {
 		// this is a terminal, let's help the user out
 		terminal = true
 		warnMessage()
+		promptForField(0)
 	}
-	s := bufio.NewScanner(os.Stdin)
-	count := 1
 
+	var prompt func(int)
 	if terminal {
-		fmt.Print("Identifier: ")
+		prompt = promptForField
 	}
 
-	periods := []msp.Period{}
-	currentPeriod := Period{}
-	for s.Scan() {
-		input := s.Text()
-		input = strings.TrimSpace(input)
-		if input == "" {
-			continue
+	periods, err := parsePeriods(os.Stdin, prompt)
+	if err != nil {
+		if errors.Is(err, errIncompletePeriod) {
+			fmt.Println("ERROR: each period must include identifier, start time, and end time")
+		} else {
+			fmt.Printf("ERROR: %v\n", err)
 		}
-		if count%3 == 0 {
-			t, err := time.Parse(time.RFC3339, input)
-			if err != nil {
-				fmt.Printf("ERROR: Invalid timestamp: %v", t)
-				os.Exit(1)
-			}
-			currentPeriod.EndTime = t
-
-			periods = append(periods, currentPeriod)
-			if terminal {
-				fmt.Print("Identifier: ")
-			}
-		}
-		if count%3 == 1 {
-			currentPeriod = Period{Identifier: s.Text()}
-			if terminal {
-				fmt.Print("StartTime: ")
-			}
-		}
-		if count%3 == 2 {
-			t, err := time.Parse(time.RFC3339, input)
-			if err != nil {
-				fmt.Printf("ERROR: Invalid timestamp: %v", t)
-				os.Exit(1)
-			}
-			currentPeriod.StartTime = t
-
-			if terminal {
-				fmt.Print("EndTime: ")
-			}
-		}
-		count++
+		os.Exit(1)
 	}
 
 	vals := msp.GenerateTimeline(periods...)
