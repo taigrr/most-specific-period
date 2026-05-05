@@ -41,7 +41,7 @@ func MostSpecificPeriod(ts time.Time, periods ...Period) (id string, err error) 
 	// Determine whichever of these periods have the same start time in addition to duration
 	var matchingDurationsAndStartTimes []Period
 	for _, x := range matchingDurations {
-		if x.GetStartTime() == newest {
+		if x.GetStartTime().Equal(newest) {
 			matchingDurationsAndStartTimes = append(matchingDurationsAndStartTimes, x)
 		}
 	}

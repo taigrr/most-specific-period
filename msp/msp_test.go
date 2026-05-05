@@ -306,3 +306,22 @@ func TestMostSpecificPeriod(t *testing.T) {
 		})
 	}
 }
+
+func TestMostSpecificPeriodEqualStartTimesAcrossLocations(t *testing.T) {
+	utc := time.Date(2026, time.January, 15, 12, 0, 0, 0, time.UTC)
+	est := time.FixedZone("EST", -5*60*60)
+	startInEST := utc.In(est)
+	ts := utc.Add(30 * time.Minute)
+	end := ts.Add(30 * time.Minute)
+
+	id, err := MostSpecificPeriod(ts,
+		TimeWindow{StartTime: utc, EndTime: end, Identifier: "A"},
+		TimeWindow{StartTime: startInEST, EndTime: end, Identifier: "B"},
+	)
+	if err != nil {
+		t.Fatalf("MostSpecificPeriod returned unexpected error: %v", err)
+	}
+	if id != "B" {
+		t.Fatalf("expected lexicographically last identifier for equal start times, got %q", id)
+	}
+}
