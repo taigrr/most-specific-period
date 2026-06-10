@@ -260,6 +260,18 @@ func TestGenerateTime(t *testing.T) {
 				},
 			},
 		},
+		{
+			testID: "only invalid periods returns empty timeline",
+			ts:     now,
+			result: []string{},
+			periods: []Period{
+				TimeWindow{
+					StartTime:  now.Add(time.Minute),
+					EndTime:    now.Add(-time.Minute),
+					Identifier: "A",
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {

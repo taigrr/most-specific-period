@@ -43,6 +43,9 @@ func GenerateTimeline(periods ...Period) (out []Period) {
 	}
 	periodsByID := make(map[string]Period)
 	ids := FlattenPeriods(periods...)
+	if len(ids) == 0 {
+		return out
+	}
 	for _, val := range periods {
 		id := val.GetIdentifier()
 		periodsByID[id] = val
