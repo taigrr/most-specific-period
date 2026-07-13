@@ -38,29 +38,15 @@ func (t TimeWindow) String() string {
 // GenerateTimeline produces a flattened timeline of non-overlapping periods
 // by splitting overlapping input periods at changeover points.
 func GenerateTimeline(periods ...Period) (out []Period) {
-	if len(periods) == 0 {
-		return out
-	}
-	periodsByID := make(map[string]Period)
-	ids := FlattenPeriods(periods...)
-	if len(ids) == 0 {
-		return out
-	}
-	for _, val := range periods {
-		id := val.GetIdentifier()
-		periodsByID[id] = val
-	}
-	start := periodsByID[ids[0]].GetStartTime()
-	for _, val := range ids {
-		next, err := GetNextChangeOver(start, periods...)
-		if err == nil {
-			if next.Equal(periodsByID[val].GetStartTime()) {
-				start = periodsByID[val].GetStartTime()
-				next = periodsByID[val].GetEndTime()
-			}
-			out = append(out, TimeWindow{StartTime: start, EndTime: next, Identifier: val})
-			start = next
+	changeovers := GetChangeOvers(periods...)
+	for index := 0; index < len(changeovers)-1; index++ {
+		start := changeovers[index]
+		end := changeovers[index+1]
+		id, err := MostSpecificPeriod(start, periods...)
+		if err != nil {
+			continue
 		}
+		out = append(out, TimeWindow{StartTime: start, EndTime: end, Identifier: id})
 	}
 	return out
 }
