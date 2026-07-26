@@ -1,6 +1,9 @@
 package main
 
-import "runtime/debug"
+import (
+	"runtime/debug"
+	"strings"
+)
 
 // Version is the build version. It defaults to the module version embedded by
 // the Go toolchain and can be overridden at build time via -ldflags.
@@ -11,8 +14,8 @@ var Commit = ""
 
 func init() {
 	if info, ok := debug.ReadBuildInfo(); ok {
-		if v := info.Main.Version; v != "" && v != "(devel)" {
-			Version = v
+		if v := info.Main.Version; v != "" && v != "(devel)" && Version == "devel" {
+			Version = strings.TrimPrefix(v, "v")
 		}
 		for _, s := range info.Settings {
 			if s.Key == "vcs.revision" && Commit == "" {
@@ -20,4 +23,5 @@ func init() {
 			}
 		}
 	}
+	Version = strings.TrimPrefix(Version, "v")
 }
