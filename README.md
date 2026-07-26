@@ -1,5 +1,6 @@
 # Most Specific Period
 
+[![CI](https://github.com/taigrr/most-specific-period/actions/workflows/ci.yml/badge.svg)](https://github.com/taigrr/most-specific-period/actions/workflows/ci.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/taigrr/most-specific-period.svg)](https://pkg.go.dev/github.com/taigrr/most-specific-period)
 [![Go Report Card](https://goreportcard.com/badge/github.com/taigrr/most-specific-period)](https://goreportcard.com/report/github.com/taigrr/most-specific-period)
 

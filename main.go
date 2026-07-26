@@ -45,7 +45,7 @@ func warnMessage() {
 }
 
 func helpMessage() {
-	fmt.Print("\nmost-specific-period [-h][-d]\n\nGenerates a timeline of periods and will provide a most specific period if available.\n\n-h\tShows this help menu\n-d\tProvide an RFC 3339 time to provide an alternate point for calculating MSP.")
+	fmt.Print("\nmost-specific-period [-h][-v][-d]\n\nGenerates a timeline of periods and will provide a most specific period if available.\n\n-h\tShows this help menu\n-v\tPrint version and exit\n-d\tProvide an RFC 3339 time to provide an alternate point for calculating MSP.")
 }
 
 func promptForField(field int) {
@@ -108,10 +108,19 @@ func parsePeriods(r io.Reader, prompt func(int)) ([]msp.Period, error) {
 func main() {
 	var start time.Time
 	help := flag.Bool("h", false, "displays help command")
+	showVersion := flag.Bool("v", false, "print version and exit")
 	userDate := flag.String("d", "", "use a custom date to calculate MSP")
 	flag.Parse()
 	if *help {
 		helpMessage()
+		os.Exit(0)
+	}
+	if *showVersion {
+		if Commit != "" {
+			fmt.Printf("most-specific-period %s (%s)\n", Version, Commit)
+		} else {
+			fmt.Printf("most-specific-period %s\n", Version)
+		}
 		os.Exit(0)
 	}
 
