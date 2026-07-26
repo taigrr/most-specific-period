@@ -261,6 +261,26 @@ func TestGenerateTime(t *testing.T) {
 			},
 		},
 		{
+			testID: "disjoint periods can share an identifier",
+			ts:     now,
+			result: []string{
+				fmt.Sprintf("A\t%s\t%s\n", now.Add(-time.Minute*10), now.Add(-time.Minute*5)),
+				fmt.Sprintf("A\t%s\t%s\n", now.Add(time.Minute*5), now.Add(time.Minute*10)),
+			},
+			periods: []Period{
+				TimeWindow{
+					StartTime:  now.Add(-time.Minute * 10),
+					EndTime:    now.Add(-time.Minute * 5),
+					Identifier: "A",
+				},
+				TimeWindow{
+					StartTime:  now.Add(time.Minute * 5),
+					EndTime:    now.Add(time.Minute * 10),
+					Identifier: "A",
+				},
+			},
+		},
+		{
 			testID: "only invalid periods returns empty timeline",
 			ts:     now,
 			result: []string{},
