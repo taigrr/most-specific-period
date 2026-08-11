@@ -19,24 +19,41 @@ func GetChangeOvers(periods ...Period) (changeovers []time.Time) {
 	sort.Slice(timeStamps, func(i, j int) bool {
 		return timeStamps[i].Before(timeStamps[j])
 	})
-	// timeStamps is sorted, so this will always result in an unused time
-	// struct, as it's before the first
-	previousTs := timeStamps[0].Add(-10 * time.Nanosecond)
+	var previousTs time.Time
+	seenPrevious := false
 	for _, ts := range timeStamps {
-		if ts.Equal(previousTs) {
+		if seenPrevious && ts.Equal(previousTs) {
 			continue
 		}
 		previousTs = ts
-		before := ts.Add(-1 * time.Nanosecond)
-		after := ts.Add(1 * time.Nanosecond)
-		from, _ := MostSpecificPeriod(before, periods...)
-		to, _ := MostSpecificPeriod(after, periods...)
+		seenPrevious = true
+		from, to := adjacentPeriodIDs(ts, periods...)
 		if from == to {
 			continue
 		}
 		changeovers = append(changeovers, ts)
 	}
 	return
+}
+
+func adjacentPeriodIDs(ts time.Time, periods ...Period) (from string, to string) {
+	if before, ok := addTime(ts, -1*time.Nanosecond); ok {
+		from, _ = MostSpecificPeriod(before, periods...)
+	}
+	if after, ok := addTime(ts, time.Nanosecond); ok {
+		to, _ = MostSpecificPeriod(after, periods...)
+	}
+	return from, to
+}
+
+func addTime(ts time.Time, duration time.Duration) (out time.Time, ok bool) {
+	defer func() {
+		if recover() != nil {
+			out = time.Time{}
+			ok = false
+		}
+	}()
+	return ts.Add(duration), true
 }
 
 // GetNextChangeOver returns the first changeover timestamp strictly after t.
