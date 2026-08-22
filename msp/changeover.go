@@ -37,23 +37,15 @@ func GetChangeOvers(periods ...Period) (changeovers []time.Time) {
 }
 
 func adjacentPeriodIDs(ts time.Time, periods ...Period) (from string, to string) {
-	if before, ok := addTime(ts, -1*time.Nanosecond); ok {
+	// time.Time.Add saturates rather than panicking at the representable
+	// extremes, so guard against a neighbor that failed to move past ts.
+	if before := ts.Add(-1 * time.Nanosecond); before.Before(ts) {
 		from, _ = MostSpecificPeriod(before, periods...)
 	}
-	if after, ok := addTime(ts, time.Nanosecond); ok {
+	if after := ts.Add(time.Nanosecond); after.After(ts) {
 		to, _ = MostSpecificPeriod(after, periods...)
 	}
 	return from, to
-}
-
-func addTime(ts time.Time, duration time.Duration) (out time.Time, ok bool) {
-	defer func() {
-		if recover() != nil {
-			out = time.Time{}
-			ok = false
-		}
-	}()
-	return ts.Add(duration), true
 }
 
 // GetNextChangeOver returns the first changeover timestamp strictly after t.
