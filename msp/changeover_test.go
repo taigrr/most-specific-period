@@ -172,6 +172,24 @@ func TestGetChangeOversAtTimeBoundaries(t *testing.T) {
 	}
 }
 
+func TestGetChangeOversAtSaturationBoundaries(t *testing.T) {
+	// These are the practical extremes of time.Time; Add(±1ns) saturates
+	// here instead of advancing, which the adjacentPeriodIDs guard handles.
+	minTime := time.Unix(-62135596801, 0)
+	maxTime := time.Unix(1<<63-62135596801, 999999999)
+
+	changeovers := GetChangeOvers(TimeWindow{
+		StartTime:  minTime,
+		EndTime:    maxTime,
+		Identifier: "all-time",
+	})
+
+	expected := []time.Time{minTime, maxTime}
+	if !slicesEqual(changeovers, expected) {
+		t.Fatalf("expected %v but got %v", expected, changeovers)
+	}
+}
+
 func TestFlattenPeriods(t *testing.T) {
 	// use a static timestamp to make sure tests don't fail on slower systems or during a process pause
 	now := time.Now()
