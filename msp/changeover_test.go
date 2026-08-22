@@ -156,6 +156,22 @@ func TestGetChangeOvers(t *testing.T) {
 	}
 }
 
+func TestGetChangeOversAtTimeBoundaries(t *testing.T) {
+	start := time.Time{}
+	end := time.Date(9999, time.December, 31, 23, 59, 59, 999999999, time.UTC)
+
+	changeovers := GetChangeOvers(TimeWindow{
+		StartTime:  start,
+		EndTime:    end,
+		Identifier: "all-time",
+	})
+
+	expected := []time.Time{start, end}
+	if !slicesEqual(changeovers, expected) {
+		t.Fatalf("expected %v but got %v", expected, changeovers)
+	}
+}
+
 func TestFlattenPeriods(t *testing.T) {
 	// use a static timestamp to make sure tests don't fail on slower systems or during a process pause
 	now := time.Now()
