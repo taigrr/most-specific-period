@@ -42,9 +42,7 @@ func adjacentPeriodIDs(ts time.Time, periods ...Period) (from string, to string)
 	if before := ts.Add(-1 * time.Nanosecond); before.Before(ts) {
 		from, _ = MostSpecificPeriod(before, periods...)
 	}
-	if after := ts.Add(time.Nanosecond); after.After(ts) {
-		to, _ = MostSpecificPeriod(after, periods...)
-	}
+	to, _ = MostSpecificPeriod(ts, periods...)
 	return from, to
 }
 
