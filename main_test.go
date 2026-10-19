@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"strings"
 	"testing"
@@ -16,7 +17,7 @@ func TestParsePeriods(t *testing.T) {
 	tests := []struct {
 		name      string
 		input     string
-		want      []Period
+		want      []cliPeriod
 		wantErr   error
 		errText   string
 		wantSteps []int
@@ -28,7 +29,7 @@ func TestParsePeriods(t *testing.T) {
 				now.Format(time.RFC3339),
 				later.Format(time.RFC3339),
 			}, "\n"),
-			want:      []Period{{Identifier: "work", StartTime: now, EndTime: later}},
+			want:      []cliPeriod{{Identifier: "work", StartTime: now, EndTime: later}},
 			wantSteps: []int{1, 2, 0},
 		},
 		{
@@ -41,7 +42,7 @@ func TestParsePeriods(t *testing.T) {
 				later.Format(time.RFC3339),
 				"",
 			}, "\n"),
-			want:      []Period{{Identifier: "work", StartTime: now, EndTime: later}},
+			want:      []cliPeriod{{Identifier: "work", StartTime: now, EndTime: later}},
 			wantSteps: []int{1, 2, 0},
 		},
 		{
@@ -114,7 +115,7 @@ func TestParsePeriods(t *testing.T) {
 				t.Fatalf("expected %d periods, got %d", len(tc.want), len(got))
 			}
 			for index := range tc.want {
-				period, ok := got[index].(Period)
+				period, ok := got[index].(cliPeriod)
 				if !ok {
 					t.Fatalf("period %d had unexpected type %T", index, got[index])
 				}
@@ -123,5 +124,65 @@ func TestParsePeriods(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestRootCommandVersion(t *testing.T) {
+	t.Parallel()
+
+	var stdout bytes.Buffer
+	cmd := newRootCommand(strings.NewReader(""), &stdout, false)
+	cmd.SetArgs([]string{"--version"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("command returned error: %v", err)
+	}
+	if got := stdout.String(); got != "most-specific-period devel\n" {
+		t.Fatalf("expected version output, got %q", got)
+	}
+}
+
+func TestRootCommandWithPipedInput(t *testing.T) {
+	t.Parallel()
+
+	start := time.Date(2026, time.May, 5, 10, 0, 0, 0, time.UTC)
+	input := strings.Join([]string{
+		"day",
+		start.Add(-24 * time.Hour).Format(time.RFC3339),
+		start.Add(24 * time.Hour).Format(time.RFC3339),
+		"hour",
+		start.Add(-time.Hour).Format(time.RFC3339),
+		start.Add(time.Hour).Format(time.RFC3339),
+	}, "\n")
+
+	var stdout bytes.Buffer
+	cmd := newRootCommand(strings.NewReader(input), &stdout, false)
+	cmd.SetArgs([]string{"--date", start.Format(time.RFC3339)})
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("command returned error: %v", err)
+	}
+
+	got := stdout.String()
+	if strings.Contains(got, "Identifier:") {
+		t.Fatalf("piped input should not prompt, got %q", got)
+	}
+	if !strings.Contains(got, "\nhour\n") {
+		t.Fatalf("expected MSP identifier in output, got %q", got)
+	}
+}
+
+func TestRootCommandReportsInvalidDate(t *testing.T) {
+	t.Parallel()
+
+	var stdout bytes.Buffer
+	cmd := newRootCommand(strings.NewReader(""), &stdout, false)
+	cmd.SetArgs([]string{"--date", "nope"})
+
+	if err := cmd.Execute(); err == nil {
+		t.Fatal("expected invalid date error")
+	}
+	if !strings.Contains(stdout.String(), "Please enter the date using the YYYY-MM-DDT00:00:00.00Z") {
+		t.Fatalf("expected invalid date message, got %q", stdout.String())
 	}
 }
