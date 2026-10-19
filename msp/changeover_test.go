@@ -190,6 +190,22 @@ func TestGetChangeOversAtSaturationBoundaries(t *testing.T) {
 	}
 }
 
+func TestGetChangeOversIncludesNanosecondPeriodStart(t *testing.T) {
+	start := time.Date(2026, time.September, 19, 3, 0, 0, 0, time.UTC)
+	end := start.Add(time.Nanosecond)
+
+	changeovers := GetChangeOvers(TimeWindow{
+		StartTime:  start,
+		EndTime:    end,
+		Identifier: "instant",
+	})
+
+	expected := []time.Time{start, end}
+	if !slicesEqual(changeovers, expected) {
+		t.Fatalf("expected %v but got %v", expected, changeovers)
+	}
+}
+
 func TestFlattenPeriods(t *testing.T) {
 	// use a static timestamp to make sure tests don't fail on slower systems or during a process pause
 	now := time.Now()
