@@ -36,13 +36,21 @@ func GetChangeOvers(periods ...Period) (changeovers []time.Time) {
 	return
 }
 
-func adjacentPeriodIDs(ts time.Time, periods ...Period) (from string, to string) {
+// periodSelection distinguishes a valid empty identifier from a gap.
+type periodSelection struct {
+	identifier string
+	present    bool
+}
+
+func adjacentPeriodIDs(ts time.Time, periods ...Period) (from periodSelection, to periodSelection) {
 	// time.Time.Add saturates rather than panicking at the representable
 	// extremes, so guard against a neighbor that failed to move past ts.
 	if before := ts.Add(-1 * time.Nanosecond); before.Before(ts) {
-		from, _ = MostSpecificPeriod(before, periods...)
+		identifier, err := MostSpecificPeriod(before, periods...)
+		from = periodSelection{identifier: identifier, present: err == nil}
 	}
-	to, _ = MostSpecificPeriod(ts, periods...)
+	identifier, err := MostSpecificPeriod(ts, periods...)
+	to = periodSelection{identifier: identifier, present: err == nil}
 	return from, to
 }
 
