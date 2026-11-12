@@ -82,8 +82,9 @@ func TestParsePeriods(t *testing.T) {
 			t.Parallel()
 
 			var gotSteps []int
-			got, err := parsePeriods(strings.NewReader(tc.input), func(field int) {
+			got, err := parsePeriods(strings.NewReader(tc.input), func(field int) error {
 				gotSteps = append(gotSteps, field)
+				return nil
 			})
 			if len(gotSteps) != len(tc.wantSteps) {
 				t.Fatalf("expected prompt steps %v, got %v", tc.wantSteps, gotSteps)
@@ -184,5 +185,64 @@ func TestRootCommandReportsInvalidDate(t *testing.T) {
 	}
 	if !strings.Contains(stdout.String(), "Please enter the date using the YYYY-MM-DDT00:00:00.00Z") {
 		t.Fatalf("expected invalid date message, got %q", stdout.String())
+	}
+}
+
+// failOutput fails a chosen write and records any attempts to keep writing.
+type failOutput struct {
+	writes int
+	failAt int
+	err    error
+}
+
+func (output *failOutput) Write(data []byte) (int, error) {
+	output.writes++
+	if output.writes >= output.failAt {
+		return 0, output.err
+	}
+	return len(data), nil
+}
+
+func TestRootCommandOutputFailures(t *testing.T) {
+	t.Parallel()
+	input := "work\n2026-05-05T09:00:00Z\n2026-05-05T11:00:00Z\n"
+	tests := []struct {
+		name     string
+		input    string
+		args     []string
+		terminal bool
+	}{
+		{name: "version", args: []string{"--version"}},
+		{name: "invalid date", args: []string{"--date", "invalid"}},
+		{name: "incomplete input", input: "work\n"},
+		{name: "invalid input", input: "work\ninvalid\n"},
+		{name: "no periods"},
+		{name: "timeline", input: input, args: []string{"--date", "2026-05-05T10:00:00Z"}},
+		{name: "interactive", input: input, args: []string{"--date", "2026-05-05T10:00:00Z"}, terminal: true},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// First count the writes for this path, then fail each one in turn.
+			output := &failOutput{failAt: 1000}
+			cmd := newRootCommand(strings.NewReader(tc.input), output, tc.terminal)
+			cmd.SetArgs(tc.args)
+			_ = cmd.Execute()
+			writeCount := output.writes
+			if writeCount == 0 {
+				t.Fatal("expected output")
+			}
+			for failAt := 1; failAt <= writeCount; failAt++ {
+				wantErr := errors.New("output unavailable")
+				output := &failOutput{failAt: failAt, err: wantErr}
+				cmd := newRootCommand(strings.NewReader(tc.input), output, tc.terminal)
+				cmd.SetArgs(tc.args)
+				if err := cmd.Execute(); !errors.Is(err, wantErr) {
+					t.Fatalf("write %d: expected output error, got %v", failAt, err)
+				}
+				if output.writes != failAt {
+					t.Fatalf("continued writing after failure: %d writes, failed at %d", output.writes, failAt)
+				}
+			}
+		})
 	}
 }
