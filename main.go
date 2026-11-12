@@ -35,22 +35,27 @@ func (p cliPeriod) GetIdentifier() string {
 	return p.Identifier
 }
 
-func warnMessage(w io.Writer) {
-	fmt.Fprint(w, "Please type your date formats as follows, hit return between each field (RFC 3339), and hit Control+D to signal you are complete: \nIdentifier: id\nStartTime: 2019-10-12T07:20:50.52Z\nEndTime: 2019-10-12T07:20:50.52Z\n")
+func warnMessage(w io.Writer) error {
+	_, err := fmt.Fprint(w, "Please type your date formats as follows, hit return between each field (RFC 3339), and hit Control+D to signal you are complete: \nIdentifier: id\nStartTime: 2019-10-12T07:20:50.52Z\nEndTime: 2019-10-12T07:20:50.52Z\n")
+	return err
 }
 
-func promptForField(w io.Writer, field int) {
+func promptForField(w io.Writer, field int) error {
 	switch field {
 	case 0:
-		fmt.Fprint(w, "Identifier: ")
+		_, err := fmt.Fprint(w, "Identifier: ")
+		return err
 	case 1:
-		fmt.Fprint(w, "StartTime: ")
+		_, err := fmt.Fprint(w, "StartTime: ")
+		return err
 	case 2:
-		fmt.Fprint(w, "EndTime: ")
+		_, err := fmt.Fprint(w, "EndTime: ")
+		return err
 	}
+	return nil
 }
 
-func parsePeriods(r io.Reader, prompt func(int)) ([]msp.Period, error) {
+func parsePeriods(r io.Reader, prompt func(int) error) ([]msp.Period, error) {
 	scanner := bufio.NewScanner(r)
 	periods := []msp.Period{}
 	currentPeriod := cliPeriod{}
@@ -82,7 +87,9 @@ func parsePeriods(r io.Reader, prompt func(int)) ([]msp.Period, error) {
 
 		field = (field + 1) % 3
 		if prompt != nil {
-			prompt(field)
+			if err := prompt(field); err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -110,9 +117,13 @@ func newRootCommand(stdin io.Reader, stdout io.Writer, terminal bool) *cobra.Com
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if showVersion {
 				if Commit != "" {
-					fmt.Fprintf(stdout, "most-specific-period %s (%s)\n", Version, Commit)
+					if _, writeErr := fmt.Fprintf(stdout, "most-specific-period %s (%s)\n", Version, Commit); writeErr != nil {
+						return writeErr
+					}
 				} else {
-					fmt.Fprintf(stdout, "most-specific-period %s\n", Version)
+					if _, writeErr := fmt.Fprintf(stdout, "most-specific-period %s\n", Version); writeErr != nil {
+						return writeErr
+					}
 				}
 				return nil
 			}
@@ -120,7 +131,9 @@ func newRootCommand(stdin io.Reader, stdout io.Writer, terminal bool) *cobra.Com
 			if userDate != "" {
 				t, err := time.Parse(time.RFC3339, userDate)
 				if err != nil {
-					fmt.Fprintln(stdout, "Please enter the date using the YYYY-MM-DDT00:00:00.00Z")
+					if _, writeErr := fmt.Fprintln(stdout, "Please enter the date using the YYYY-MM-DDT00:00:00.00Z"); writeErr != nil {
+						return writeErr
+					}
 					return err
 				}
 				start = t
@@ -129,41 +142,64 @@ func newRootCommand(stdin io.Reader, stdout io.Writer, terminal bool) *cobra.Com
 			}
 
 			if terminal {
-				warnMessage(stdout)
-				promptForField(stdout, 0)
+				if err := warnMessage(stdout); err != nil {
+					return err
+				}
+				if err := promptForField(stdout, 0); err != nil {
+					return err
+				}
 			}
 
-			var prompt func(int)
+			var prompt func(int) error
+			var promptErr error
 			if terminal {
-				prompt = func(field int) {
-					promptForField(stdout, field)
+				prompt = func(field int) error {
+					promptErr = promptForField(stdout, field)
+					return promptErr
 				}
 			}
 
 			periods, err := parsePeriods(stdin, prompt)
+			if promptErr != nil {
+				return promptErr
+			}
 			if err != nil {
 				if errors.Is(err, errIncompletePeriod) {
-					fmt.Fprintln(stdout, "ERROR: each period must include identifier, start time, and end time")
+					if _, writeErr := fmt.Fprintln(stdout, "ERROR: each period must include identifier, start time, and end time"); writeErr != nil {
+						return writeErr
+					}
 				} else {
-					fmt.Fprintf(stdout, "ERROR: %v\n", err)
+					if _, writeErr := fmt.Fprintf(stdout, "ERROR: %v\n", err); writeErr != nil {
+						return writeErr
+					}
 				}
 				return err
 			}
 
 			vals := msp.GenerateTimeline(periods...)
-			fmt.Fprint(stdout, "\nTimeline of changeovers:\n")
+			if _, writeErr := fmt.Fprint(stdout, "\nTimeline of changeovers:\n"); writeErr != nil {
+				return writeErr
+			}
 			for _, val := range vals {
-				fmt.Fprintln(stdout, val)
+				if _, writeErr := fmt.Fprintln(stdout, val); writeErr != nil {
+					return writeErr
+				}
 			}
 			m, err := msp.MostSpecificPeriod(start, periods...)
 			if err != nil {
-				fmt.Fprintln(stdout, "No significant period found")
+				if _, writeErr := fmt.Fprintln(stdout, "No significant period found"); writeErr != nil {
+					return writeErr
+				}
 				return err
 			}
 			if terminal {
-				fmt.Fprint(stdout, "\nThe MSP from the list was: ")
+				if _, writeErr := fmt.Fprint(stdout, "\nThe MSP from the list was: "); writeErr != nil {
+					return writeErr
+				}
 			}
-			fmt.Fprintf(stdout, "%s\n", m)
+			if _, writeErr := fmt.Fprintf(stdout, "%s\n", m); writeErr != nil {
+				return writeErr
+			}
 			return nil
 		},
 	}
