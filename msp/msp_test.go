@@ -325,3 +325,44 @@ func TestMostSpecificPeriodEqualStartTimesAcrossLocations(t *testing.T) {
 		t.Fatalf("expected lexicographically last identifier for equal start times, got %q", id)
 	}
 }
+
+func TestMostSpecificPeriodLongDurations(t *testing.T) {
+	start := time.Date(1000, time.January, 1, 0, 0, 0, 0, time.UTC)
+	shortEnd := start.AddDate(400, 0, 0)
+	for _, extra := range []time.Duration{time.Nanosecond, time.Second, time.Hour} {
+		t.Run(extra.String(), func(t *testing.T) {
+			short := TimeWindow{StartTime: start, EndTime: shortEnd, Identifier: "A"}
+			long := TimeWindow{StartTime: start, EndTime: shortEnd.Add(extra), Identifier: "Z"}
+			for _, periods := range [][]Period{{short, long}, {long, short}} {
+				id, err := MostSpecificPeriod(start, periods...)
+				if err != nil || id != "A" {
+					t.Fatalf("expected shorter multi-century period A, got %q, %v", id, err)
+				}
+			}
+		})
+	}
+}
+
+func TestMostSpecificPeriodLongDurationOrdering(t *testing.T) {
+	start := time.Date(1000, time.January, 1, 0, 0, 0, 1, time.UTC)
+	end := time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)
+	for _, testCase := range []struct {
+		name  string
+		other TimeWindow
+		want  string
+	}{
+		{"shorter beats later start", TimeWindow{StartTime: start.AddDate(1, 0, 0), EndTime: end.AddDate(2, 0, 0), Identifier: "Z"}, "A"},
+		{"equal duration prefers later start", TimeWindow{StartTime: start.Add(time.Second), EndTime: end.Add(time.Second), Identifier: "Z"}, "Z"},
+		{"equal duration and start prefers identifier", TimeWindow{StartTime: start, EndTime: end, Identifier: "Z"}, "Z"},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			first := TimeWindow{StartTime: start, EndTime: end, Identifier: "A"}
+			for _, periods := range [][]Period{{first, testCase.other}, {testCase.other, first}} {
+				id, err := MostSpecificPeriod(start.AddDate(5, 0, 0), periods...)
+				if err != nil || id != testCase.want {
+					t.Fatalf("expected %q, got %q, %v", testCase.want, id, err)
+				}
+			}
+		})
+	}
+}
