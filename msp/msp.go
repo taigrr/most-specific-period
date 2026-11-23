@@ -16,18 +16,18 @@ func MostSpecificPeriod(ts time.Time, periods ...Period) (id string, err error) 
 		return "", ErrNoValidPeriods
 	}
 	// find the shortest duration
-	d, _ := GetDuration(periods[0].GetStartTime(), periods[0].GetEndTime())
+	d := exactDuration(periods[0])
 	for _, x := range periods {
-		p, err := GetDuration(x.GetStartTime(), x.GetEndTime())
-		if err == nil && p < d {
+		p := exactDuration(x)
+		if p.seconds < d.seconds || (p.seconds == d.seconds && p.nanoseconds < d.nanoseconds) {
 			d = p
 		}
 	}
 	// find all periods with this shortest duration
 	var matchingDurations []Period
 	for _, x := range periods {
-		p, err := GetDuration(x.GetStartTime(), x.GetEndTime())
-		if err == nil && p == d {
+		p := exactDuration(x)
+		if p == d {
 			matchingDurations = append(matchingDurations, x)
 		}
 	}
@@ -52,6 +52,27 @@ func MostSpecificPeriod(ts time.Time, periods ...Period) (id string, err error) 
 	}
 	sort.Strings(identifiers)
 	return identifiers[len(identifiers)-1], nil
+}
+
+// periodDuration represents a nonnegative span without time.Duration's
+// approximately 292-year saturation limit.
+type periodDuration struct {
+	seconds     uint64
+	nanoseconds int
+}
+
+// exactDuration is called only for periods containing the query timestamp,
+// so end is strictly after start. Unsigned subtraction also handles spans
+// crossing the Unix epoch without signed integer overflow.
+func exactDuration(period Period) periodDuration {
+	start, end := period.GetStartTime(), period.GetEndTime()
+	seconds := uint64(end.Unix()) - uint64(start.Unix())
+	nanoseconds := end.Nanosecond() - start.Nanosecond()
+	if nanoseconds < 0 {
+		seconds--
+		nanoseconds += int(time.Second)
+	}
+	return periodDuration{seconds: seconds, nanoseconds: nanoseconds}
 }
 
 // GetDuration returns the duration between start and end. If start is after
