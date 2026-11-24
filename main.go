@@ -81,6 +81,9 @@ func parsePeriods(r io.Reader, prompt func(int) error) ([]msp.Period, error) {
 			if err != nil {
 				return nil, fmt.Errorf("invalid end timestamp %q: %w", input, err)
 			}
+			if !end.After(currentPeriod.StartTime) {
+				return nil, fmt.Errorf("period %q: end time must be after start time", currentPeriod.Identifier)
+			}
 			currentPeriod.EndTime = end
 			periods = append(periods, currentPeriod)
 		}

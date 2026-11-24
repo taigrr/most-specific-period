@@ -88,6 +88,8 @@ type Period interface {
 A demo CLI is included. It reads periods from stdin (one per three lines:
 identifier, start time, end time in RFC 3339) and displays the timeline
 and MSP.
+Each end time must be strictly after its start time; invalid intervals are
+rejected before any timeline is printed.
 
 ```bash
 go run . -d 2024-06-15T12:00:00Z <<EOF
